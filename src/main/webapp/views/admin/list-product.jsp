@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
@@ -17,6 +17,8 @@
         body { font-family: var(--font-main); background: var(--content-bg); color: #334155; font-size: 14px; }
         .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh; background: linear-gradient(180deg, #007bff 0%, #0056b3 100%); color: #fff; display: flex; flex-direction: column; z-index: 1040; box-shadow: 2px 0 14px rgba(0,0,0,.14); }
         .sidebar-brand, .sidebar-user { display: flex; align-items: center; gap: 12px; padding: 22px 20px; border-bottom: 1px solid rgba(255,255,255,.15); }
+        .sidebar-brand { justify-content: center; padding: 24px 20px 20px; }
+        .sidebar-logo { width: 190px; height: 70px; object-fit: contain; display: block; }
         .brand-icon, .avatar-circle { width: 46px; height: 46px; border-radius: 10px; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .avatar-circle { border-radius: 50%; border: 2px solid #fff; }
         .brand-text { font-size: 18px; font-weight: 600; line-height: 1.2; }
@@ -45,8 +47,8 @@
 </head>
 <body>
 <aside class="sidebar">
-    <div class="sidebar-brand"><span class="brand-icon"><i class="fa-solid fa-bag-shopping"></i></span><span class="brand-text">Admin Panel<small>Quản trị cửa hàng</small></span></div>
-    <div class="sidebar-user"><div class="avatar-circle"><i class="fa-solid fa-user"></i></div><div><div class="user-name"><c:out value="${sessionScope.account.fullName}" default="Admin"/></div><div class="user-role">● Administrator</div></div></div>
+    <div class="sidebar-brand"><a href="${pageContext.request.contextPath}/admin/category/list" aria-label="KhangGear Admin"><img class="sidebar-logo" src="${pageContext.request.contextPath}/assets/images/khanggear-logo.png" alt="KhangGear"></a></div>
+    <div class="sidebar-user"><div class="avatar-circle"><i class="fa-solid fa-user"></i></div><div><div class="user-name"><c:out value="${sessionScope.account.fullName}" default="Admin"/></div><div class="user-role">● ${sessionScope.account.roleid == 1 ? 'Administrator' : sessionScope.account.roleid == 2 ? 'Manager' : 'Customer'}</div></div></div>
     <nav class="sidebar-menu">
         <div class="menu-label">Menu chính</div>
         <a href="${pageContext.request.contextPath}/admin/category/list" class="menu-item"><i class="fa-solid fa-layer-group"></i> Quản lý Danh mục</a>
@@ -61,7 +63,7 @@
 <div class="main-wrapper">
     <header class="top-header">
         <h5 class="page-title">Danh Sách Sản Phẩm</h5>
-        <div><c:if test="${not empty sessionScope.account}">Xin chào, <strong><c:out value="${sessionScope.account.fullName}"/></strong></c:if> <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm ms-3 btn-icon"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a></div>
+        <div><c:if test="${not empty sessionScope.account}">Xin chào, <strong><c:out value="${sessionScope.account.fullName}"/></strong></c:if> <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm ms-2 btn-icon"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a></div>
     </header>
     <main class="main-content">
         <c:if test="${not empty param.message}"><div class="alert alert-success"><c:out value="${param.message}"/></div></c:if>
@@ -84,7 +86,7 @@
                         <tbody>
                         <c:forEach items="${products}" var="p" varStatus="s">
                             <tr>
-                                <td>${(page - 1) * 10 + s.index + 1}</td>
+                                <td>${(page - 1) * 6 + s.index + 1}</td>
                                 <td><c:choose><c:when test="${not empty p.image && (fn:startsWith(p.image, 'http://') || fn:startsWith(p.image, 'https://'))}"><img src="${p.image}" class="product-img" alt="${p.name}"></c:when><c:when test="${not empty p.image}"><c:url value="/image" var="img"><c:param name="fname" value="${p.image}"/></c:url><img src="${img}" class="product-img" alt="${p.name}"></c:when><c:otherwise><img src="https://placehold.co/80x80?text=No+Image" class="product-img" alt="No image"></c:otherwise></c:choose></td>
                                 <td class="fw-medium"><c:out value="${p.name}"/></td>
                                 <td><c:out value="${p.category.name}"/></td>
@@ -94,7 +96,10 @@
                                 <td class="text-center">
                                     <a class="btn btn-sm btn-outline-info btn-icon" href="${pageContext.request.contextPath}/admin/product/detail?id=${p.id}"><i class="fa-solid fa-eye"></i> Xem</a>
                                     <a class="btn btn-sm btn-outline-primary btn-icon" href="${pageContext.request.contextPath}/admin/product/edit?id=${p.id}"><i class="fa-solid fa-pen"></i> Sửa</a>
-                                    <a class="btn btn-sm btn-outline-danger btn-icon" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')" href="${pageContext.request.contextPath}/admin/product/delete?id=${p.id}"><i class="fa-solid fa-trash"></i> Xóa</a>
+                                    <form class="d-inline" method="post" action="${pageContext.request.contextPath}/admin/product/delete" onsubmit="return confirm('B&#7841;n c&#243; ch&#7855;c mu&#7889;n x&#243;a s&#7843;n ph&#7849;m n&#224;y?')">
+                                        <input type="hidden" name="id" value="${p.id}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger btn-icon"><i class="fa-solid fa-trash"></i> Xóa</button>
+                                    </form>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -102,7 +107,10 @@
                         </tbody>
                     </table>
                 </div>
-                <c:if test="${totalPages > 1}"><nav><ul class="pagination pagination-sm justify-content-end"><c:forEach begin="1" end="${totalPages}" var="i"><li class="page-item ${i == page ? 'active' : ''}"><a class="page-link" href="?page=${i}&keyword=${param.keyword}&categoryId=${param.categoryId}&active=${param.active}">${i}</a></li></c:forEach></ul></nav></c:if>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <small class="text-secondary">Tổng số: ${totalItems} sản phẩm</small>
+                    <c:if test="${totalPages > 1}"><nav aria-label="Phân trang sản phẩm"><ul class="pagination pagination-sm mb-0"><li class="page-item ${page <= 1 ? 'disabled' : ''}"><a class="page-link" href="?page=${page - 1}&keyword=${param.keyword}&categoryId=${param.categoryId}&active=${param.active}">Trước</a></li><c:forEach begin="1" end="${totalPages}" var="i"><li class="page-item ${i == page ? 'active' : ''}"><a class="page-link" href="?page=${i}&keyword=${param.keyword}&categoryId=${param.categoryId}&active=${param.active}">${i}</a></li></c:forEach><li class="page-item ${page >= totalPages ? 'disabled' : ''}"><a class="page-link" href="?page=${page + 1}&keyword=${param.keyword}&categoryId=${param.categoryId}&active=${param.active}">Sau</a></li></ul></nav></c:if>
+                </div>
             </div>
         </div>
     </main>

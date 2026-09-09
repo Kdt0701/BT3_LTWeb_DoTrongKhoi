@@ -5,6 +5,8 @@ import com.baitap.model.User;
 public interface UserDao {
     User findByUsername(String username);
 
+    User findByEmail(String email);
+
     boolean checkExistEmail(String email);
 
     boolean checkExistUsername(String username);
@@ -19,7 +21,17 @@ public interface UserDao {
 
     void update(User user);
 
+    void updateProfile(User user);
+
     void updateActive(int id, boolean active);
+
+    void updateEmailVerified(int id, boolean emailVerified);
+
+    void updatePassword(int id, String passwordHash);
+
+    boolean hasOrders(int id);
+
+    void delete(int id);
 
     boolean existsEmailExceptId(String email, int id);
 

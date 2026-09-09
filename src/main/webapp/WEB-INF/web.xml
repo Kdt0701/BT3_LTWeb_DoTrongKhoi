@@ -7,6 +7,23 @@
 
   <display-name>dangnhap</display-name>
 
+  <!-- SiteMesh chỉ áp dụng cho các trang Category của Bài tập 03. -->
+  <filter>
+    <filter-name>sitemesh</filter-name>
+    <filter-class>org.sitemesh.config.ConfigurableSiteMeshFilter</filter-class>
+    <init-param>
+      <param-name>configFile</param-name>
+      <param-value>/WEB-INF/sitemesh3.xml</param-value>
+    </init-param>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>sitemesh</filter-name>
+    <url-pattern>/admin/category/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+    <dispatcher>FORWARD</dispatcher>
+  </filter-mapping>
+
   <!-- Welcome file -->
   <welcome-file-list>
     <welcome-file>index.jsp</welcome-file>
@@ -35,4 +52,3 @@
   </error-page>
 
 </web-app>
-

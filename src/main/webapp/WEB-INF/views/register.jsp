@@ -1,15 +1,4 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Đăng ký</title></head><body>
-<h2>Đăng ký tài khoản</h2>
-<c:if test="${not empty error}"><p style="color:red"><c:out value="${error}"/></p></c:if>
-<form action="${pageContext.request.contextPath}/register" method="post">
-  <label>Tên đăng nhập <input name="username" required value="${formUser.userName}"></label><br><br>
-  <label>Mật khẩu <input name="password" type="password" required></label><br><br>
-  <label>Email <input name="email" type="email" required value="${formUser.email}"></label><br><br>
-  <label>Họ và tên <input name="fullname" value="${formUser.fullName}"></label><br><br>
-  <label>Số điện thoại <input name="phone" value="${formUser.phone}"></label><br><br>
-  <button type="submit">Đăng ký</button>
-</form>
-<p><a href="${pageContext.request.contextPath}/login">Đã có tài khoản? Đăng nhập</a></p>
-</body></html>
+<%@ page import="com.baitap.model.User,java.util.Map" %>
+<% User formUser=(User)request.getAttribute("formUser"); Map<String,String> errors=(Map<String,String>)request.getAttribute("fieldErrors"); %>
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Đăng ký | KhangGear</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"><link rel="stylesheet" href="<%=request.getContextPath()%>/assets/css/auth.css"></head><body class="auth-page"><main class="auth-overlay"><section class="auth-card"><img class="auth-brand" src="<%=request.getContextPath()%>/assets/images/khanggear-logo.png" alt="KhangGear"><h1>Đăng ký</h1><p class="auth-subtitle">Tạo tài khoản KhangGear của bạn</p><% if(request.getAttribute("error")!=null){ %><p class="auth-alert"><%=request.getAttribute("error")%></p><% } %><form action="<%=request.getContextPath()%>/register" method="post"><div class="auth-field"><label>Tên đăng nhập</label><input name="username" required value="<%=formUser==null?"":formUser.getUserName()%>"><% if(errors!=null&&errors.get("username")!=null){ %><small class="field-error"><%=errors.get("username")%></small><% } %></div><div class="auth-field"><label>Họ và tên</label><input name="fullname" maxlength="150" value="<%=formUser==null?"":formUser.getFullName()%>"><% if(errors!=null&&errors.get("fullname")!=null){ %><small class="field-error"><%=errors.get("fullname")%></small><% } %></div><div class="auth-field"><label>Email</label><input name="email" type="email" required value="<%=formUser==null?"":formUser.getEmail()%>"><% if(errors!=null&&errors.get("email")!=null){ %><small class="field-error"><%=errors.get("email")%></small><% } %></div><div class="auth-field"><label>Số điện thoại</label><input name="phone" value="<%=formUser==null?"":formUser.getPhone()%>"><% if(errors!=null&&errors.get("phone")!=null){ %><small class="field-error"><%=errors.get("phone")%></small><% } %></div><div class="auth-field"><label>Mật khẩu</label><input id="password" name="password" type="password" required><% if(errors!=null&&errors.get("password")!=null){ %><small class="field-error"><%=errors.get("password")%></small><% } %></div><div class="auth-field"><label>Xác nhận mật khẩu</label><input name="confirmPassword" type="password" required><% if(errors!=null&&errors.get("confirmPassword")!=null){ %><small class="field-error"><%=errors.get("confirmPassword")%></small><% } %></div><button class="auth-submit" type="submit">Đăng ký</button></form><p class="auth-footer">Đã có tài khoản? <a href="<%=request.getContextPath()%>/login">Đăng nhập</a></p></section></main></body></html>
