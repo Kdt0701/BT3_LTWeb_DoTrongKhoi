@@ -38,6 +38,7 @@ public final class FormValidation {
     public static void email(Map<String, String> errors, String field, String value) {
         String normalized = trim(value);
         required(errors, field, normalized, "email");
+        maxLength(errors, field, normalized, 255, "Email");
         if (!normalized.isEmpty() && !EMAIL.matcher(normalized).matches()) {
             errors.putIfAbsent(field, "Email không đúng định dạng.");
         }
@@ -137,6 +138,22 @@ public final class FormValidation {
         String contentType = part.getContentType() == null ? "" : part.getContentType().toLowerCase();
         if (!IMAGE_EXTENSIONS.contains(extension) || !IMAGE_CONTENT_TYPES.contains(contentType)) {
             errors.putIfAbsent(field, "Ảnh phải có định dạng JPG, PNG, GIF hoặc WEBP hợp lệ.");
+        }
+    }
+
+    public static void validateAvatar(Map<String, String> errors, String field, Part part, long maxBytes) {
+        if (part == null || part.getSize() == 0) {
+            return;
+        }
+        if (part.getSize() > maxBytes) {
+            errors.putIfAbsent(field, "Ảnh đại diện không được lớn hơn " + (maxBytes / (1024 * 1024)) + " MB.");
+            return;
+        }
+        String extension = extensionOf(part.getSubmittedFileName());
+        String contentType = part.getContentType() == null ? "" : part.getContentType().toLowerCase();
+        if (!Set.of("jpg", "jpeg", "png", "webp").contains(extension)
+                || !Set.of("image/jpeg", "image/png", "image/webp").contains(contentType)) {
+            errors.putIfAbsent(field, "Ảnh đại diện phải có định dạng JPG, PNG hoặc WEBP hợp lệ.");
         }
     }
 

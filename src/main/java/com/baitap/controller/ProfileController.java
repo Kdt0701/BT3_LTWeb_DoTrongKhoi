@@ -14,10 +14,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import java.io.IOException;
+import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import vn.iotstar.validation.FormValidation;
 import vn.iotstar.validation.ImageUploadUtil;
+import vn.iotstar.util.Constant;
 
 @MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 2 * 1024 * 1024, maxRequestSize = 5 * 1024 * 1024)
 @WebServlet(urlPatterns = "/profile")
@@ -27,54 +31,110 @@ public class ProfileController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        User account = currentAccount(request, response); if (account == null) return;
-        if (UserRole.canAccessAdmin(account.getRoleid())) { response.sendRedirect(request.getContextPath() + "/admin/category/list"); return; }
+        User account = currentAccount(request, response);
+        if (account == null) return;
+        if (UserRole.canAccessAdmin(account.getRoleid())) {
+            response.sendRedirect(request.getContextPath() + "/admin/category/list");
+            return;
+        }
         FlashMessage.expose(request);
         User fresh = userService.findById(account.getId());
-        if (fresh == null || !fresh.isActive()) { response.sendRedirect(request.getContextPath() + "/logout"); return; }
-        request.getSession().setAttribute("account", fresh); request.setAttribute("profileUser", fresh);
+        if (fresh == null || !fresh.isActive()) {
+            response.sendRedirect(request.getContextPath() + "/logout");
+            return;
+        }
+        request.getSession().setAttribute("account", fresh);
+        request.setAttribute("profileUser", fresh);
+        request.setAttribute("avatarUrl", publicAvatarUrl(request, fresh.getAvatar()));
         request.getRequestDispatcher("/WEB-INF/views/profile.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        User account = currentAccount(request, response); if (account == null) return;
-        if (UserRole.canAccessAdmin(account.getRoleid())) { response.sendRedirect(request.getContextPath() + "/admin/category/list"); return; }
+        User account = currentAccount(request, response);
+        if (account == null) return;
+        if (UserRole.canAccessAdmin(account.getRoleid())) {
+            response.sendRedirect(request.getContextPath() + "/admin/category/list");
+            return;
+        }
         User fresh = userService.findById(account.getId());
-        if (fresh == null || !fresh.isActive()) { response.sendRedirect(request.getContextPath() + "/logout"); return; }
+        if (fresh == null || !fresh.isActive()) {
+            response.sendRedirect(request.getContextPath() + "/logout");
+            return;
+        }
+
         String fullName = FormValidation.trim(request.getParameter("fullname"));
         String phone = FormValidation.trim(request.getParameter("phone"));
         Map<String, String> errors = new LinkedHashMap<>();
         FormValidation.required(errors, "fullname", fullName, "họ và tên");
         FormValidation.maxLength(errors, "fullname", fullName, 150, "Họ và tên");
         FormValidation.optionalPhone(errors, "phone", phone);
+
         Part avatarPart = null;
-        try { avatarPart = request.getPart("avatar"); }
-        catch (IllegalStateException | ServletException exception) { errors.put("avatar", "Ảnh đại diện không được vượt quá 2 MB."); }
-        FormValidation.validateImage(errors, "avatar", avatarPart, MAX_FILE_SIZE);
-        fresh.setFullName(fullName); fresh.setPhone(phone);
-        if (!errors.isEmpty()) {
-            showFormErrors(request, response, fresh, errors); return;
-        }
         try {
-            if (avatarPart != null && avatarPart.getSize() > 0) fresh.setAvatar(ImageUploadUtil.save(avatarPart, "avatar"));
+            avatarPart = request.getPart("avatar");
+        } catch (IllegalStateException | ServletException exception) {
+            errors.put("avatar", "Ảnh đại diện không được vượt quá 2 MB.");
+        }
+        FormValidation.validateAvatar(errors, "avatar", avatarPart, MAX_FILE_SIZE);
+        fresh.setFullName(fullName);
+        fresh.setPhone(phone);
+        if (!errors.isEmpty()) {
+            showFormErrors(request, response, fresh, errors);
+            return;
+        }
+
+        String savedAvatar = null;
+        try {
+            if (avatarPart != null && avatarPart.getSize() > 0) {
+                savedAvatar = ImageUploadUtil.save(avatarPart, "avatar");
+                fresh.setAvatar(savedAvatar);
+            }
             userService.updateProfile(fresh);
             request.getSession().setAttribute("account", fresh);
             FlashMessage.success(request, "Cập nhật hồ sơ thành công.");
-        } catch (RuntimeException exception) {
-            FlashMessage.error(request, exception.getMessage() == null ? "Không thể cập nhật hồ sơ." : exception.getMessage());
+        } catch (RuntimeException | IOException exception) {
+            ImageUploadUtil.deleteQuietly(savedAvatar);
+            getServletContext().log("Profile update failed", exception);
+            FlashMessage.error(request, "Không thể cập nhật hồ sơ. Vui lòng thử lại.");
         }
         response.sendRedirect(request.getContextPath() + "/profile");
     }
 
-    private void showFormErrors(HttpServletRequest request, HttpServletResponse response, User user, Map<String, String> errors) throws ServletException, IOException {
-        request.setAttribute("profileUser", user); request.setAttribute("fieldErrors", errors);
+    private void showFormErrors(HttpServletRequest request, HttpServletResponse response, User user,
+                                Map<String, String> errors) throws ServletException, IOException {
+        request.setAttribute("profileUser", user);
+        request.setAttribute("avatarUrl", publicAvatarUrl(request, user.getAvatar()));
+        request.setAttribute("fieldErrors", errors);
         request.getRequestDispatcher("/WEB-INF/views/profile.jsp").forward(request, response);
     }
 
     private User currentAccount(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false); Object value = session == null ? null : session.getAttribute("account");
+        HttpSession session = request.getSession(false);
+        Object value = session == null ? null : session.getAttribute("account");
         if (value instanceof User user) return user;
-        response.sendRedirect(request.getContextPath() + "/login"); return null;
+        response.sendRedirect(request.getContextPath() + "/login");
+        return null;
+    }
+
+    private String publicAvatarUrl(HttpServletRequest request, String avatar) {
+        if (avatar == null || avatar.isBlank()) {
+            return null;
+        }
+        String source = avatar.trim();
+        if (source.startsWith("http://") || source.startsWith("https://")) {
+            return source;
+        }
+        String normalized = source.replace('\\', '/');
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        if (normalized.contains("..")) {
+            return null;
+        }
+        File file = new File(Constant.DIR, normalized);
+        String version = file.isFile() ? "&v=" + file.lastModified() : "";
+        return request.getContextPath() + "/image?fname="
+                + URLEncoder.encode(normalized, StandardCharsets.UTF_8).replace("+", "%20") + version;
     }
 }

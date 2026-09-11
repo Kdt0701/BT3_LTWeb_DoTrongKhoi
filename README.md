@@ -1,4 +1,8 @@
+BÀI TẬP MÔN LẬP TRÌNH WEB: Hệ Thống Quản Trị & Cửa Hàng KhangGear (Java Web)
 
+> Validation: HTML5 ho tro va server-side `FormValidation` bao ve account, OTP, Profile, Category, Product, User admin va checkout. Email duoc gioi han 255 ky tu truoc khi ghi database; anh upload chi duoc luu sau khi validation hop le.
+
+> SiteMesh 3.3.0-RC1 dung Bootstrap template rieng cho Bai tap 03 va chi ap dung `/admin/category/*`; storefront, API, login, OTP va cac trang admin khac khong bi decorator.
 
 Tài khoản đăng nhập quyền quản trị viên/quản lý test thử: admin|pass: 123 hoặc manager|pass: 123
 Tài khoản User tự tạo và phải điền email thật để hệ thống gửi otp kích hoạt tài khoản
@@ -328,7 +332,7 @@ Công nghệ bổ sung/được dùng trong giai đoạn này: Jakarta Persisten
 - Kiểm tra & Bảo mật file upload:
   - Giới hạn dung lượng tối đa 2MB (trả thông báo thân thiện nếu vượt quá giới hạn).
   - Kiểm tra MIME type hợp lệ (`image/jpeg`, `image/png`, `image/webp`) và phần mở rộng an toàn (`.jpg`, `.jpeg`, `.png`, `.webp`).
-  - Đặt tên file an toàn bằng UUID ngẫu nhiên gắn với User ID (`avatar_{id}_{uuid}.ext`), ngăn ngừa xung đột và tuyệt đối không dùng tên file gốc từ client.
+  - Đặt tên file an toàn bằng UUID ngẫu nhiên (`avatar/{uuid}.ext`), ngăn ngừa xung đột và tuyệt đối không dùng tên file gốc từ client.
   - Chặn tấn công đường dẫn Path Traversal bằng chuẩn hóa đường dẫn `Path.normalize()`.
 - Lưu trữ & Hiển thị:
   - Lưu vào thư mục upload chuyên biệt: `Constant.DIR + "/avatar"`.
